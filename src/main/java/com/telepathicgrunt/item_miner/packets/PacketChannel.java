@@ -19,7 +19,7 @@ public class PacketChannel {
     public static void init()
     {
         int channelID = -1;
-        PacketChannel.DEFAULT_CHANNEL.registerMessage(++channelID, LevelProgressPacketHandler.UpdateLevelProgressPacket.class, LevelProgressPacketHandler.UpdateLevelProgressPacket::compose, LevelProgressPacketHandler.UpdateLevelProgressPacket::parse, LevelProgressPacketHandler.UpdateLevelProgressPacket.Handler::handle);
-        PacketChannel.DEFAULT_CHANNEL.registerMessage(++channelID, ItemMinablePacketHandler.UpdateMinablePacket.class, ItemMinablePacketHandler.UpdateMinablePacket::compose, ItemMinablePacketHandler.UpdateMinablePacket::parse, ItemMinablePacketHandler.UpdateMinablePacket.Handler::handle);
+        PacketChannel.DEFAULT_CHANNEL.registerMessage(++channelID, LevelProgressPacketHandler.UpdateLevelProgressPacket.class, LevelProgressPacketHandler.UpdateLevelProgressPacket::encode, LevelProgressPacketHandler.UpdateLevelProgressPacket::decode, LevelProgressPacketHandler.UpdateLevelProgressPacket::handle);
+        PacketChannel.DEFAULT_CHANNEL.registerMessage(++channelID, ItemMinablePacketHandler.UpdateMinablePacket.class, ItemMinablePacketHandler.UpdateMinablePacket::encode, ItemMinablePacketHandler.UpdateMinablePacket::decode, ItemMinablePacketHandler.UpdateMinablePacket::handle);
     }
 }

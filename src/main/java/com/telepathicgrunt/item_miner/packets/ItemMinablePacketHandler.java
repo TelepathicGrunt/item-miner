@@ -17,6 +17,7 @@ import net.minecraftforge.fml.network.PacketDistributor;
 import net.minecraftforge.fml.network.simple.SimpleChannel;
 import net.minecraftforge.registries.ForgeRegistries;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -28,9 +29,9 @@ public class ItemMinablePacketHandler {
      *
      * Packet to send to client and how the client will respond
      */
-    public static class UpdateMinablePacket
-    {
-        private Set<Block> itemMinables;
+    public static class UpdateMinablePacket {
+
+        private final Set<Block> itemMinables;
 
         public static void sendToClient(Set<Block> itemMinables) {
             PacketChannel.DEFAULT_CHANNEL.send(PacketDistributor.ALL.noArg(), new UpdateMinablePacket(itemMinables));
@@ -46,47 +47,34 @@ public class ItemMinablePacketHandler {
         /*
          * How the client will read the packet.
          */
-        public static UpdateMinablePacket parse(final PacketBuffer buf) {
-            CompoundNBT nbt = buf.readNbt();
-            assert nbt != null;
-            ListNBT listNBT = nbt.getList("mineables", 8);
-            int size = Math.min(listNBT.size(), 1024);
+        public static UpdateMinablePacket decode(final PacketBuffer buf) {
+            int size = buf.readVarInt();
             Set<Block> mineableBlocks = new HashSet<>();
-            for(int index = 0; index < size; ++index) {
-                mineableBlocks.add(ForgeRegistries.BLOCKS.getValue(new ResourceLocation(listNBT.getString(index))));
+
+            for (int i = 0; i < size; i++) {
+                mineableBlocks.add(ForgeRegistries.BLOCKS.getValue(buf.readResourceLocation()));
             }
+
             return new UpdateMinablePacket(mineableBlocks);
         }
 
         /*
          * creates the packet buffer and sets its values
          */
-        public static void compose(final UpdateMinablePacket pkt, final PacketBuffer buf)
-        {
-            ListNBT listNBT = new ListNBT();
-            for(Block block : pkt.itemMinables) {
-                listNBT.add(StringNBT.valueOf(block.getRegistryName().toString()));
+        public static void encode(final UpdateMinablePacket pkt, final PacketBuffer buf) {
+            buf.writeVarInt(pkt.itemMinables.size());
+            for (Block block : pkt.itemMinables) {
+                buf.writeResourceLocation(block.getRegistryName());
             }
-            CompoundNBT nbt = new CompoundNBT();
-            nbt.put("mineables", listNBT);
-
-            buf.writeNbt(nbt);
         }
 
 
         /*
          * What the client will do with the packet
          */
-        public static class Handler
-        {
-            //this is what gets run on the client
-            public static void handle(final UpdateMinablePacket pkt, final Supplier<NetworkEvent.Context> ctx)
-            {
-                Minecraft.getInstance().execute(() -> {
-                    MiningBehavior.ITEM_MINERS_BLOCKS = pkt.itemMinables;
-                });
-                ctx.get().setPacketHandled(true);
-            }
+        public void handle(final Supplier<NetworkEvent.Context> ctx) {
+            MiningBehavior.ITEM_MINERS_BLOCKS = itemMinables;
+            ctx.get().setPacketHandled(true);
         }
     }
 
