@@ -3,7 +3,6 @@ package com.telepathicgrunt.item_miner;
 import com.telepathicgrunt.item_miner.utils.ConfigHelper;
 import net.minecraftforge.common.ForgeConfigSpec;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 

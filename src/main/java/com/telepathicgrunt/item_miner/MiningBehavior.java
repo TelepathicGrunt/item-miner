@@ -2,8 +2,8 @@ package com.telepathicgrunt.item_miner;
 
 import com.telepathicgrunt.item_miner.capabilities.IPlayerLevelAndProgress;
 import com.telepathicgrunt.item_miner.capabilities.PlayerLevelAndProgress;
-import com.telepathicgrunt.item_miner.packets.MineableBlockPacket;
 import com.telepathicgrunt.item_miner.packets.LevelProgressPacketHandler;
+import com.telepathicgrunt.item_miner.packets.MineableBlockPacket;
 import com.telepathicgrunt.item_miner.packets.PacketChannel;
 import net.minecraft.block.Block;
 import net.minecraft.entity.item.ItemEntity;

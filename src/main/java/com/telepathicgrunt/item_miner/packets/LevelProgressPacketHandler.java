@@ -4,7 +4,6 @@ import com.telepathicgrunt.item_miner.ItemMiner;
 import com.telepathicgrunt.item_miner.client.ItemMinerClient;
 import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.fml.network.NetworkEvent;
-import net.minecraftforge.fml.network.PacketDistributor;
 
 import java.util.function.Supplier;
 
