@@ -9,7 +9,7 @@ public class PlayerLevelAndProgress implements IPlayerLevelAndProgress
 {
 	private int level = 1;
 	private int progress = 0;
-	private long lastMinedTime = Long.MIN_VALUE;
+	private long lastMinedTime = -1;
 
 	@Override
 	public void setLevel(int level) {

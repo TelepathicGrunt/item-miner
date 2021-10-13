@@ -7,7 +7,7 @@ Mod details: specify a block to be mined and randomly spawns items based on prog
 
 Checklist:
 
-Add ~~AdaPaxels~~ (Fabric mod) and Useless Sword into dev environment for testing later on. (Finished)
+Add Useless Sword into dev environment for testing later on. (Finished)
 
 Create a class to parse registry at mod startup and create a map of level to a set of items they can spawn. (Finished)
 
@@ -18,12 +18,10 @@ Hook up capability onto player to hold mining progress. (Finished)
 Hook up the code to make block unbreakable and no mining overlay but spawns blocks instead based on player progress. 
   If player is not the specified leader, spawn level 1 items always. (Finished)
 
-Create gui element that shows the player's progress on screen.
+Create gui element that shows the player's progress on screen. (Finished)
 
-Test to see that it all works.
+Create packet system so that server can send the leader's progress to everyone. (Finished)
 
-Create packet system so that server can send the leader's progress to everyone.
-
-Hook up gui progress bar to the packet on client side.
+Hook up gui progress bar to the packet on client side. (Finished)
 
 Test and see if it all works.

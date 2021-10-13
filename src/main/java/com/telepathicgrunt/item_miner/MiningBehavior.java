@@ -2,13 +2,15 @@ package com.telepathicgrunt.item_miner;
 
 import com.telepathicgrunt.item_miner.capabilities.IPlayerLevelAndProgress;
 import com.telepathicgrunt.item_miner.capabilities.PlayerLevelAndProgress;
+import com.telepathicgrunt.item_miner.packets.ItemMinablePacketHandler;
+import com.telepathicgrunt.item_miner.packets.LevelProgressPacketHandler;
 import net.minecraft.block.Block;
 import net.minecraft.entity.item.ItemEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.GameRules;
 import net.minecraft.world.World;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityInject;
@@ -34,6 +36,20 @@ public class MiningBehavior {
                 .map(stringRl -> ForgeRegistries.BLOCKS.getValue(new ResourceLocation(stringRl)))
                 .collect(Collectors.toSet());
     }
+
+    // Make sure all clients that joins gets the set of mineable blocks for visual and proper behavior.
+    // Also updates client to know what the current hunted's level and progress is
+    public static void PlayerJoinEvent(PlayerEvent.PlayerLoggedInEvent event) {
+        if(!event.getPlayer().level.isClientSide()) {
+            ItemMinablePacketHandler.UpdateMinablePacket.sendToClient(ITEM_MINERS_BLOCKS);
+            ServerPlayerEntity serverPlayerEntity = event.getPlayer().level.getServer().getPlayerList().getPlayerByName(ItemMiner.ITEM_MINER_CONFIGS.huntedName.get());
+            if(serverPlayerEntity != null) {
+                PlayerLevelAndProgress cap = (PlayerLevelAndProgress) serverPlayerEntity.getCapability(PLAYER_LEVEL_AND_PROGRESS).orElseThrow(RuntimeException::new);
+                LevelProgressPacketHandler.UpdateLevelProgressPacket.sendToClient(cap.getLevel(), cap.getProgress(), ItemMiner.ITEM_MINER_CONFIGS.itemsToLevelUp.get());
+            }
+        }
+    }
+
 
     // Prevent block from being broken by anything if player is not in creative.
     public static void BlockDestroyEvent(BlockEvent.BreakEvent event) {
@@ -72,9 +88,10 @@ public class MiningBehavior {
                 PlayerLevelAndProgress cap = (PlayerLevelAndProgress) event.getPlayer().getCapability(PLAYER_LEVEL_AND_PROGRESS).orElseThrow(RuntimeException::new);
 
                 // Delays the spawning of time when continuously mining.
+                // -1 is to make sure we can always mine at start
                 long lastMinedTime = cap.getLastMinedTime();
                 long currentMinedTime = world.getGameTime();
-                if(currentMinedTime - lastMinedTime < ItemMiner.ITEM_MINER_CONFIGS.miningSpeed.get().longValue()) {
+                if(lastMinedTime != -1 && currentMinedTime - lastMinedTime < ItemMiner.ITEM_MINER_CONFIGS.miningSpeed.get().longValue()) {
                     return;
                 }
                 cap.setLastMinedTime(currentMinedTime);
@@ -83,7 +100,8 @@ public class MiningBehavior {
                 // If it is the hunted, uses the hunted's level for hunted's items.
                 // Otherwise, using level 1 items for everyone else.
                 int level = 1;
-                if (event.getPlayer().getName().getContents().equals(ItemMiner.ITEM_MINER_CONFIGS.huntedName.get())) {
+                boolean isCurrentlyHuntedPlayer = event.getPlayer().getName().getContents().equals(ItemMiner.ITEM_MINER_CONFIGS.huntedName.get());
+                if (isCurrentlyHuntedPlayer) {
                     level = Math.min(cap.getLevel(), ItemCollections.MAX_LEVEL);
                 }
 
@@ -107,12 +125,17 @@ public class MiningBehavior {
 
                 // Update progress on entity (applies to all players in case we want to switch to per-player progress)
                 int progress = cap.getProgress();
-                if(progress + 1 == 100) {
+                if(progress + 1 >= ItemMiner.ITEM_MINER_CONFIGS.itemsToLevelUp.get()) {
                     cap.setProgress(0);
                     cap.setLevel(level + 1);
                 }
                 else {
                     cap.setProgress(progress + 1);
+                }
+
+                // Send the new level and progress to client to display visually is it is the hunted that is mining.
+                if(isCurrentlyHuntedPlayer) {
+                    LevelProgressPacketHandler.UpdateLevelProgressPacket.sendToClient(cap.getLevel(), cap.getProgress(), ItemMiner.ITEM_MINER_CONFIGS.itemsToLevelUp.get());
                 }
             }
         }

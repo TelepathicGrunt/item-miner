@@ -14,6 +14,7 @@ public class ItemMinerConfigs {
         public ConfigHelper.ConfigValueListener<List<String>> itemMinerBlocks;
         public ConfigHelper.ConfigValueListener<String> huntedName;
         public ConfigHelper.ConfigValueListener<Integer> miningSpeed;
+        public ConfigHelper.ConfigValueListener<Integer> itemsToLevelUp;
 
         public ItemMinerConfigValues(ForgeConfigSpec.Builder builder, ConfigHelper.Subscriber subscriber) {
 
@@ -34,6 +35,12 @@ public class ItemMinerConfigs {
                             "How many ticks is the delay in item spawning if holding down the mining button on the item miner block.")
                     .translation("item_miner.config.miningSpeed")
                     .define("miningspeed", 10));
+
+            itemsToLevelUp = subscriber.subscribe(builder
+                    .comment("\n-----------------------------------------------------",
+                            "How many items to mine to level up once.")
+                    .translation("item_miner.config.itemstolevelup")
+                    .define("itemsToLevelUp", 25));
         }
     }
 }
