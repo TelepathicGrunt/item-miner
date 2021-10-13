@@ -13,10 +13,10 @@ Create a class to parse registry at mod startup and create a map of level to a s
 
 Create a config to specify which block is the item miner and who is the leader that the level is based on. (Finished)
 
-Hook up capability onto player to hold mining progress.
+Hook up capability onto player to hold mining progress. (Finished)
 
 Hook up the code to make block unbreakable and no mining overlay but spawns blocks instead based on player progress. 
-  If player is not the specified leader, spawn level 1 items always. 
+  If player is not the specified leader, spawn level 1 items always. (Finished)
 
 Create gui element that shows the player's progress on screen.
 
