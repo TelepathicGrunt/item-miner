@@ -50,7 +50,6 @@ public class LevelProgressPacketHandler implements ItemMinerPacket{
         ItemMinerClient.currentLevelToDisplay = level;
         ItemMinerClient.currentProgressToDisplay = progess;
         ItemMinerClient.currentMaxProgressToDisplay = maxProgress;
-        ItemMiner.LOGGER.info("Packet recieved: {}, {}, {}", level, progess, maxProgress);
         ctx.get().setPacketHandled(true);
     }
 }

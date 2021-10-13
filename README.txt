@@ -5,7 +5,7 @@ start time: 10:18pm 10/13/2021
 
 Mod details: specify a block to be mined and randomly spawns items based on progress.
 
-Checklist:
+### Checklist:
 
 Add Useless Sword into dev environment for testing later on. (Finished)
 
@@ -24,4 +24,9 @@ Create packet system so that server can send the leader's progress to everyone. 
 
 Hook up gui progress bar to the packet on client side. (Finished)
 
-Test and see if it all works.
+Test and see if it all works. (Finished)
+
+
+### Extra checklist:
+
+improve config to specify any level and any items. (Finished)

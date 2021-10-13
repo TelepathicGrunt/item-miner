@@ -108,27 +108,35 @@ public class MiningBehavior {
 
                 // grabs the collection of items and picks a random one
                 List<Item> collection = ItemCollections.LEVEL_TO_ITEMS.get(level);
-                ItemStack newItemStack = collection.get(world.random.nextInt(collection.size())).getDefaultInstance();
+                if(!collection.isEmpty()) {
+                    ItemStack newItemStack = collection.get(world.random.nextInt(collection.size())).getDefaultInstance();
 
-                // spawns the new item in world above block
-                BlockPos pos = event.getPos();
-                double xOffset = (double)(world.random.nextFloat() * 0.5F) + 0.25D;
-                double yOffset = (double)(world.random.nextFloat() * 0.5F) + 0.75D;
-                double zOffset = (double)(world.random.nextFloat() * 0.5F) + 0.25D;
-                ItemEntity itementity = new ItemEntity(
-                        world,
-                        (double)pos.getX() + xOffset,
-                        (double)pos.getY() + yOffset,
-                        (double)pos.getZ() + zOffset,
-                        newItemStack);
-                itementity.setDefaultPickUpDelay();
-                world.addFreshEntity(itementity);
+                    // spawns the new item in world above block
+                    BlockPos pos = event.getPos();
+                    double xOffset = (double)(world.random.nextFloat() * 0.5F) + 0.25D;
+                    double yOffset = (double)(world.random.nextFloat() * 0.5F) + 0.75D;
+                    double zOffset = (double)(world.random.nextFloat() * 0.5F) + 0.25D;
+                    ItemEntity itementity = new ItemEntity(
+                            world,
+                            (double)pos.getX() + xOffset,
+                            (double)pos.getY() + yOffset,
+                            (double)pos.getZ() + zOffset,
+                            newItemStack);
+                    itementity.setDefaultPickUpDelay();
+                    world.addFreshEntity(itementity);
+                }
 
                 // Update progress on entity (applies to all players in case we want to switch to per-player progress)
                 int progress = cap.getProgress();
                 if(progress + 1 >= ItemMiner.ITEM_MINER_CONFIGS.itemsToLevelUp.get()) {
-                    cap.setProgress(0);
-                    cap.setLevel(level + 1);
+                    // Maxes out progress and makes it never go above the final level from itemsPerList config.
+                    if(level < ItemCollections.MAX_LEVEL) {
+                        cap.setProgress(0);
+                        cap.setLevel(level + 1);
+                    }
+                    else if(progress < ItemMiner.ITEM_MINER_CONFIGS.itemsToLevelUp.get()) {
+                        cap.setProgress(progress + 1);
+                    }
                 }
                 else {
                     cap.setProgress(progress + 1);
