@@ -7,6 +7,7 @@ import com.telepathicgrunt.item_miner.packets.MineableBlockPacket;
 import com.telepathicgrunt.item_miner.packets.PacketChannel;
 import net.minecraft.block.Block;
 import net.minecraft.entity.item.ItemEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -59,6 +60,10 @@ public class MiningBehavior {
             ITEM_MINERS_BLOCKS.contains(event.getState().getBlock()))
         {
             event.setCanceled(true);
+
+            if(ItemMiner.ITEM_MINER_CONFIGS.dropOnlyOnBlockBreak.get()) {
+                attemptItemSpawning(event.getPlayer().level, event.getPlayer(), event.getPos());
+            }
         }
     }
 
@@ -81,71 +86,75 @@ public class MiningBehavior {
             !event.getPlayer().isCreative() &&
             ITEM_MINERS_BLOCKS.contains(event.getState().getBlock()))
         {
-            // prevents mining overlay on block
-            event.setNewSpeed(0);
+            event.setNewSpeed(ItemMiner.ITEM_MINER_CONFIGS.miningSpeed.get());
 
-            World world = event.getPlayer().level;
-            if (!world.isClientSide) {
-                PlayerLevelAndProgress cap = (PlayerLevelAndProgress) event.getPlayer().getCapability(PLAYER_LEVEL_AND_PROGRESS).orElseThrow(RuntimeException::new);
+            if(!ItemMiner.ITEM_MINER_CONFIGS.dropOnlyOnBlockBreak.get())
+                attemptItemSpawning(event.getPlayer().level, event.getPlayer(), event.getPos());
+        }
+    }
 
-                // Delays the spawning of time when continuously mining.
-                // -1 is to make sure we can always mine at start
-                long lastMinedTime = cap.getLastMinedTime();
-                long currentMinedTime = world.getGameTime();
-                if(lastMinedTime != -1 && currentMinedTime - lastMinedTime < ItemMiner.ITEM_MINER_CONFIGS.miningSpeed.get().longValue()) {
+    private static void attemptItemSpawning(World world, PlayerEntity player, BlockPos pos) {
+        if (!world.isClientSide) {
+            PlayerLevelAndProgress cap = (PlayerLevelAndProgress) player.getCapability(PLAYER_LEVEL_AND_PROGRESS).orElseThrow(RuntimeException::new);
+
+            // Delays the spawning of time when continuously mining.
+            // -1 is to make sure we can always mine at start
+            long lastMinedTime = cap.getLastMinedTime();
+            long currentMinedTime = world.getGameTime();
+            if(!ItemMiner.ITEM_MINER_CONFIGS.dropOnlyOnBlockBreak.get()) {
+                if(lastMinedTime != -1 && currentMinedTime - lastMinedTime < ItemMiner.ITEM_MINER_CONFIGS.itemSpawnRate.get().longValue()) {
                     return;
                 }
-                cap.setLastMinedTime(currentMinedTime);
+            }
+            cap.setLastMinedTime(currentMinedTime);
 
-                // Gets the level to use for item spawning.
-                // If it is the hunted, uses the hunted's level for hunted's items.
-                // Otherwise, using level 1 items for everyone else.
-                int level = 1;
-                boolean isCurrentlyHuntedPlayer = event.getPlayer().getName().getContents().equals(ItemMiner.ITEM_MINER_CONFIGS.huntedName.get());
-                if (isCurrentlyHuntedPlayer) {
-                    level = Math.min(cap.getLevel(), ItemCollections.MAX_LEVEL);
+            // Gets the level to use for item spawning.
+            // If it is the hunted, uses the hunted's level for hunted's items.
+            // Otherwise, using level 1 items for everyone else.
+            int level = 1;
+            boolean isCurrentlyHuntedPlayer = player.getName().getContents().equals(ItemMiner.ITEM_MINER_CONFIGS.huntedName.get());
+            if (isCurrentlyHuntedPlayer) {
+                level = Math.min(cap.getLevel(), ItemCollections.MAX_LEVEL);
+            }
+
+            // grabs the collection of items and picks a random one
+            List<Item> collection = ItemCollections.LEVEL_TO_ITEMS.get(level);
+            if(!collection.isEmpty()) {
+                ItemStack newItemStack = collection.get(world.random.nextInt(collection.size())).getDefaultInstance();
+
+                // spawns the new item in world above block
+                double xOffset = (double)(world.random.nextFloat() * 0.5F) + 0.25D;
+                double yOffset = (double)(world.random.nextFloat() * 0.5F) + 0.75D;
+                double zOffset = (double)(world.random.nextFloat() * 0.5F) + 0.25D;
+                ItemEntity itementity = new ItemEntity(
+                        world,
+                        (double)pos.getX() + xOffset,
+                        (double)pos.getY() + yOffset,
+                        (double)pos.getZ() + zOffset,
+                        newItemStack);
+                itementity.setDefaultPickUpDelay();
+                world.addFreshEntity(itementity);
+            }
+
+            // Update progress on entity (applies to all players in case we want to switch to per-player progress)
+            int progress = cap.getProgress();
+            if(progress + 1 >= ItemMiner.ITEM_MINER_CONFIGS.itemsToLevelUp.get()) {
+                // Maxes out progress and makes it never go above the final level from itemsPerList config.
+                if(level < ItemCollections.MAX_LEVEL) {
+                    cap.setProgress(0);
+                    cap.setLevel(level + 1);
                 }
-
-                // grabs the collection of items and picks a random one
-                List<Item> collection = ItemCollections.LEVEL_TO_ITEMS.get(level);
-                if(!collection.isEmpty()) {
-                    ItemStack newItemStack = collection.get(world.random.nextInt(collection.size())).getDefaultInstance();
-
-                    // spawns the new item in world above block
-                    BlockPos pos = event.getPos();
-                    double xOffset = (double)(world.random.nextFloat() * 0.5F) + 0.25D;
-                    double yOffset = (double)(world.random.nextFloat() * 0.5F) + 0.75D;
-                    double zOffset = (double)(world.random.nextFloat() * 0.5F) + 0.25D;
-                    ItemEntity itementity = new ItemEntity(
-                            world,
-                            (double)pos.getX() + xOffset,
-                            (double)pos.getY() + yOffset,
-                            (double)pos.getZ() + zOffset,
-                            newItemStack);
-                    itementity.setDefaultPickUpDelay();
-                    world.addFreshEntity(itementity);
-                }
-
-                // Update progress on entity (applies to all players in case we want to switch to per-player progress)
-                int progress = cap.getProgress();
-                if(progress + 1 >= ItemMiner.ITEM_MINER_CONFIGS.itemsToLevelUp.get()) {
-                    // Maxes out progress and makes it never go above the final level from itemsPerList config.
-                    if(level < ItemCollections.MAX_LEVEL) {
-                        cap.setProgress(0);
-                        cap.setLevel(level + 1);
-                    }
-                    else if(progress < ItemMiner.ITEM_MINER_CONFIGS.itemsToLevelUp.get()) {
-                        cap.setProgress(progress + 1);
-                    }
-                }
-                else {
+                else if(progress < ItemMiner.ITEM_MINER_CONFIGS.itemsToLevelUp.get()) {
                     cap.setProgress(progress + 1);
                 }
+            }
+            else {
+                cap.setProgress(progress + 1);
+            }
 
-                // Send the new level and progress to client to display visually is it is the hunted that is mining.
-                if(isCurrentlyHuntedPlayer) {
-                    PacketChannel.sendToAllPlayers(new LevelProgressPacketHandler(cap.getLevel(), cap.getProgress(), ItemMiner.ITEM_MINER_CONFIGS.itemsToLevelUp.get()));
-                }
+            // Send the new level and progress to client to display visually is it is the hunted that is mining.
+            if(isCurrentlyHuntedPlayer) {
+                PacketChannel.sendToAllPlayers(new LevelProgressPacketHandler(cap.getLevel(), cap.getProgress(), ItemMiner.ITEM_MINER_CONFIGS.itemsToLevelUp.get()));
             }
         }
     }

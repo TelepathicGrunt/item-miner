@@ -12,6 +12,8 @@ public class ItemMinerConfigs {
 
         public ConfigHelper.ConfigValueListener<List<String>> itemMinerBlocks;
         public ConfigHelper.ConfigValueListener<String> huntedName;
+        public ConfigHelper.ConfigValueListener<Integer> itemSpawnRate;
+        public ConfigHelper.ConfigValueListener<Boolean> dropOnlyOnBlockBreak;
         public ConfigHelper.ConfigValueListener<Integer> miningSpeed;
         public ConfigHelper.ConfigValueListener<Integer> itemsToLevelUp;
         public ConfigHelper.ConfigValueListener<List<String>> itemsPerList;
@@ -20,25 +22,39 @@ public class ItemMinerConfigs {
 
             itemMinerBlocks = subscriber.subscribe(builder
                     .comment("\n-----------------------------------------------------",
-                            "A list of items that should become unbreakable and spawns items when mined.")
+                            " A list of items that should become unbreakable and spawns items when mined.")
                     .translation("item_miner.config.itemminerblocks")
                     .define("itemMinerBlocks", Arrays.asList("minecraft:gold_block", "minecraft:diamond_block")));
 
             huntedName = subscriber.subscribe(builder
                     .comment("\n-----------------------------------------------------",
-                            "The name of the hunted person whose progress is shown to everyone else.")
+                            " The name of the hunted person whose progress is shown to everyone else.")
                     .translation("item_miner.config.huntedname")
                     .define("huntedName", "Dev"));
 
+            itemSpawnRate = subscriber.subscribe(builder
+                    .comment("\n-----------------------------------------------------",
+                            " How many ticks is the delay in item spawning if holding down the mining button on the item miner block.",
+                            " NOTE: this config gets turned off if dropOnlyOnBlockBreak config is set to true.")
+                    .translation("item_miner.config.itemspawnrate")
+                    .define("itemSpawnRate", 7));
+
+            dropOnlyOnBlockBreak = subscriber.subscribe(builder
+                    .comment("\n-----------------------------------------------------",
+                            " How many ticks is the delay in item spawning if holding down the mining button on the item miner block.")
+                    .translation("item_miner.config.droponlyonblockbreak")
+                    .define("dropOnlyOnBlockBreak", true));
+
             miningSpeed = subscriber.subscribe(builder
                     .comment("\n-----------------------------------------------------",
-                            "How many ticks is the delay in item spawning if holding down the mining button on the item miner block.")
+                            " How much faster or slower mining the block is.",
+                            " If dropOnlyOnBlockBreak is true, this affects the mining overlay on the block.")
                     .translation("item_miner.config.miningSpeed")
-                    .define("miningspeed", 7));
+                    .define("miningspeed", 9));
 
             itemsToLevelUp = subscriber.subscribe(builder
                     .comment("\n-----------------------------------------------------",
-                            "How many items to mine to level up once.")
+                            " How many items to mine to level up once.")
                     .translation("item_miner.config.itemstolevelup")
                     .define("itemsToLevelUp", 100));
 
