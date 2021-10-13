@@ -30,7 +30,7 @@ minecraft {
             arg "-mixin.config=" + project.getProperty('modid') + ".mixins.json"
             property 'mixin.env.remapRefMap', 'true'
             property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
-            mods { modidx { source sourceSets.main } }
+            mods { item_miner { source sourceSets.main } }
         }
 
         server {
@@ -38,13 +38,14 @@ minecraft {
             arg "-mixin.config=" + project.getProperty('modid') + ".mixins.json"
             property 'mixin.env.remapRefMap', 'true'
             property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
-            mods { modidx { source sourceSets.main } }
+            mods { item_miner { source sourceSets.main } }
         }
     }
 }
 
 repositories {
     maven { url "https://nexus.resourcefulbees.com/repository/maven-public/" }
+    maven { url "https://www.cursemaven.com" }
 }
 
 dependencies {
@@ -53,7 +54,7 @@ dependencies {
         annotationProcessor 'org.spongepowered:mixin:0.8.2:processor'
     }
 
-    runtimeOnly fg.deobf("com.telepathicgrunt:Blame:1.16.5-3.2.0-forge")
+    runtimeOnly fg.deobf("curse.maven:useless_sword-348157:3483402")
 }
 
 jar {

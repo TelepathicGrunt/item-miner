@@ -1,8 +1,8 @@
 {
   "required": true,
-  "package": "com.telepathicgrunt.modidx.mixin",
+  "package": "com.telepathicgrunt.item_miner.mixin",
   "compatibilityLevel": "JAVA_8",
-  "refmap": "modidx.refmap.json",
+  "refmap": "item_miner.refmap.json",
   "mixins": [],
   "client": [],
   "injectors": {
