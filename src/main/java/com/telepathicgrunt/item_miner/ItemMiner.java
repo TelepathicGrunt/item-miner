@@ -3,8 +3,6 @@ package com.telepathicgrunt.item_miner;
 import com.telepathicgrunt.item_miner.capabilities.CapabilityEventHandler;
 import com.telepathicgrunt.item_miner.capabilities.CapabilityPlayerLevelAndProgress;
 import com.telepathicgrunt.item_miner.client.ItemMinerClient;
-import com.telepathicgrunt.item_miner.packets.ItemMinablePacketHandler;
-import com.telepathicgrunt.item_miner.packets.LevelProgressPacketHandler;
 import com.telepathicgrunt.item_miner.packets.PacketChannel;
 import com.telepathicgrunt.item_miner.utils.ConfigHelper;
 import net.minecraft.entity.Entity;

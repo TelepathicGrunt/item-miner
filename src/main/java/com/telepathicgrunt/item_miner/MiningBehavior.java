@@ -2,8 +2,9 @@ package com.telepathicgrunt.item_miner;
 
 import com.telepathicgrunt.item_miner.capabilities.IPlayerLevelAndProgress;
 import com.telepathicgrunt.item_miner.capabilities.PlayerLevelAndProgress;
-import com.telepathicgrunt.item_miner.packets.ItemMinablePacketHandler;
+import com.telepathicgrunt.item_miner.packets.MineableBlockPacket;
 import com.telepathicgrunt.item_miner.packets.LevelProgressPacketHandler;
+import com.telepathicgrunt.item_miner.packets.PacketChannel;
 import net.minecraft.block.Block;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
@@ -41,11 +42,11 @@ public class MiningBehavior {
     // Also updates client to know what the current hunted's level and progress is
     public static void PlayerJoinEvent(PlayerEvent.PlayerLoggedInEvent event) {
         if(!event.getPlayer().level.isClientSide()) {
-            ItemMinablePacketHandler.UpdateMinablePacket.sendToClient(ITEM_MINERS_BLOCKS);
+            PacketChannel.sendToOnePlayer(new MineableBlockPacket(ITEM_MINERS_BLOCKS), (ServerPlayerEntity) event.getPlayer());
             ServerPlayerEntity serverPlayerEntity = event.getPlayer().level.getServer().getPlayerList().getPlayerByName(ItemMiner.ITEM_MINER_CONFIGS.huntedName.get());
             if(serverPlayerEntity != null) {
                 PlayerLevelAndProgress cap = (PlayerLevelAndProgress) serverPlayerEntity.getCapability(PLAYER_LEVEL_AND_PROGRESS).orElseThrow(RuntimeException::new);
-                LevelProgressPacketHandler.UpdateLevelProgressPacket.sendToClient(cap.getLevel(), cap.getProgress(), ItemMiner.ITEM_MINER_CONFIGS.itemsToLevelUp.get());
+                PacketChannel.sendToOnePlayer(new LevelProgressPacketHandler(cap.getLevel(), cap.getProgress(), ItemMiner.ITEM_MINER_CONFIGS.itemsToLevelUp.get()), (ServerPlayerEntity) event.getPlayer());
             }
         }
     }
@@ -135,7 +136,7 @@ public class MiningBehavior {
 
                 // Send the new level and progress to client to display visually is it is the hunted that is mining.
                 if(isCurrentlyHuntedPlayer) {
-                    LevelProgressPacketHandler.UpdateLevelProgressPacket.sendToClient(cap.getLevel(), cap.getProgress(), ItemMiner.ITEM_MINER_CONFIGS.itemsToLevelUp.get());
+                    PacketChannel.sendToAllPlayers(new LevelProgressPacketHandler(cap.getLevel(), cap.getProgress(), ItemMiner.ITEM_MINER_CONFIGS.itemsToLevelUp.get()));
                 }
             }
         }
