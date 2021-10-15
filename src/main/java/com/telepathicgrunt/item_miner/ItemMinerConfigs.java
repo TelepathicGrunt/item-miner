@@ -39,8 +39,8 @@ public class ItemMinerConfigs {
                     .comment("\n-----------------------------------------------------",
                             " How many items to mine to level up. This is an array per level.",
                             " Example: if there are 3 levels, the first number of this config is number of items for first level.",
-                            " Second number for second number. Etc. If this list is shorter than number of levels,",
-                            " the last number will be used for all excess levels. If this list is empty, all levels defaults to 100 items.")
+                            " Second number for second number. The last level will not read this config as last level has no progress toward another level as there is none.",
+                            " If this list is shorter than number of levels or is empty, the levels not listed will default to 100 items.")
                     .translation("item_miner.config.itemsperlevelup")
                     .define("itemsPerLevelUp", Arrays.asList(100, 300)));
 
