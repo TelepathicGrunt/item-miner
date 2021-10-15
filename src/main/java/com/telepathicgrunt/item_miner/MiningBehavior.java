@@ -11,6 +11,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.SpawnEggItem;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -125,18 +126,23 @@ public class MiningBehavior {
             if(!collection.isEmpty()) {
                 ItemStack newItemStack = collection.get(world.random.nextInt(collection.size())).getDefaultInstance();
 
-                // spawns the new item in world above block
-                double xOffset = (double)(world.random.nextFloat() * 0.5F) + 0.25D;
-                double yOffset = (double)(world.random.nextFloat() * 0.5F) + 0.75D;
-                double zOffset = (double)(world.random.nextFloat() * 0.5F) + 0.25D;
-                ItemEntity itementity = new ItemEntity(
-                        world,
-                        (double)pos.getX() + xOffset,
-                        (double)pos.getY() + yOffset,
-                        (double)pos.getZ() + zOffset,
-                        newItemStack);
-                itementity.setDefaultPickUpDelay();
-                world.addFreshEntity(itementity);
+                if(ItemMiner.ITEM_MINER_CONFIGS.spawnMobsFromSpawnEggs.get() && newItemStack.getItem() instanceof SpawnEggItem) {
+                    newItemStack.getItem().use(world, player, player.getUsedItemHand());
+                }
+                else {
+                    // spawns the new item in world above block
+                    double xOffset = (double)(world.random.nextFloat() * 0.5F) + 0.25D;
+                    double yOffset = (double)(world.random.nextFloat() * 0.5F) + 0.75D;
+                    double zOffset = (double)(world.random.nextFloat() * 0.5F) + 0.25D;
+                    ItemEntity itementity = new ItemEntity(
+                            world,
+                            (double)pos.getX() + xOffset,
+                            (double)pos.getY() + yOffset,
+                            (double)pos.getZ() + zOffset,
+                            newItemStack);
+                    itementity.setDefaultPickUpDelay();
+                    world.addFreshEntity(itementity);
+                }
             }
 
             // Update progress on entity (applies to all players in case we want to switch to per-player progress)
