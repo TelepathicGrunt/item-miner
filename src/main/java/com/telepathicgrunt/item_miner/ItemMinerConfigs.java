@@ -77,7 +77,8 @@ public class ItemMinerConfigs {
 
             dropOnlyOnBlockBreak = subscriber.subscribe(builder
                     .comment("\n-----------------------------------------------------",
-                            " How many ticks is the delay in item spawning if holding down the mining button on the item miner block.")
+                            " Drops a random item only when the block is fully mined.",
+                            " Set this to false if you want item to spawn over a set time regardless if the block is fully mined or not.")
                     .translation("item_miner.config.droponlyonblockbreak")
                     .define("dropOnlyOnBlockBreak", true));
 
