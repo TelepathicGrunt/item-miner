@@ -3,7 +3,9 @@
   "package": "com.telepathicgrunt.item_miner.mixin",
   "compatibilityLevel": "JAVA_8",
   "refmap": "item_miner.refmap.json",
-  "mixins": [],
+  "mixins": [
+    "ItemAccessor"
+  ],
   "client": [],
   "injectors": {
     "defaultRequire": 1

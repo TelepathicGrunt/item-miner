@@ -2,6 +2,7 @@ package com.telepathicgrunt.item_miner;
 
 import com.telepathicgrunt.item_miner.capabilities.IPlayerLevelAndProgress;
 import com.telepathicgrunt.item_miner.capabilities.PlayerLevelAndProgress;
+import com.telepathicgrunt.item_miner.mixin.ItemAccessor;
 import com.telepathicgrunt.item_miner.packets.LevelProgressPacketHandler;
 import com.telepathicgrunt.item_miner.packets.MineableBlockPacket;
 import com.telepathicgrunt.item_miner.packets.PacketChannel;
@@ -11,9 +12,13 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.ItemUseContext;
 import net.minecraft.item.SpawnEggItem;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockRayTraceResult;
+import net.minecraft.util.math.RayTraceContext;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.World;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityInject;
@@ -88,7 +93,7 @@ public class MiningBehavior {
             !event.getPlayer().isCreative() &&
             ITEM_MINERS_BLOCKS.contains(event.getState().getBlock()))
         {
-            if(ItemMiner.ITEM_MINER_CONFIGS.miningSpeed.get() < 0) {
+            if(ItemMiner.ITEM_MINER_CONFIGS.miningSpeed.get() >= 0) {
                 event.setNewSpeed(ItemMiner.ITEM_MINER_CONFIGS.miningSpeed.get());
             }
 
@@ -128,7 +133,20 @@ public class MiningBehavior {
                 ItemStack newItemStack = collection.get(world.random.nextInt(collection.size())).getDefaultInstance();
 
                 if(ItemMiner.ITEM_MINER_CONFIGS.spawnMobsFromSpawnEggs.get() && newItemStack.getItem() instanceof SpawnEggItem) {
-                    newItemStack.getItem().use(world, player, player.getUsedItemHand());
+                    // We have to do this weird workaround instead of grabbing the entitytype directly from the egg's field because
+                    // some mods pass null for the entitytype and overrides the onUse and use methods. Imo, that's bad practice.
+                    // Never pass in null for entity type please people.
+
+                    // Simulate item use on blocks to get spawn eggs to spawn mobs.
+                    RayTraceResult raytraceresult = ItemAccessor.callGetPlayerPOVHitResult(world, player, RayTraceContext.FluidMode.SOURCE_ONLY);
+                    if(raytraceresult.getType() == RayTraceResult.Type.BLOCK) {
+                        ItemUseContext itemUseContext = new ItemUseContext(player, player.getUsedItemHand(), (BlockRayTraceResult)raytraceresult);
+                        newItemStack.getItem().useOn(itemUseContext);
+                    }
+                    // spawns item on fluids. Spawn eggs are weird lol
+                    else {
+                        newItemStack.getItem().use(world, player, player.getUsedItemHand());
+                    }
                 }
                 else {
                     // spawns the new item in world above block
