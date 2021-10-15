@@ -66,7 +66,7 @@ public class ItemMinerConfigs {
 
             moddedItemRates = subscriber.subscribe(builder
                     .comment("\n-----------------------------------------------------",
-                            " A list of how common modded are per level.",
+                            " A list of how common modded items are per level.",
                             " First entry is for level 1. Second for level 2. Etc",
                             " If a level does not have modded items, the entry here for that level is ignored.",
                             " If this list is shorter than number of levels, levels not listed here will spawn items as if they all have an equal chance.",
