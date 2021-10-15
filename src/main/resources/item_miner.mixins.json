@@ -4,7 +4,7 @@
   "compatibilityLevel": "JAVA_8",
   "refmap": "item_miner.refmap.json",
   "mixins": [
-    "ItemAccessor"
+    "SpawnEggItemAccessor"
   ],
   "client": [],
   "injectors": {

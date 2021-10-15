@@ -51,7 +51,7 @@ repositories {
 dependencies {
     minecraft 'net.minecraftforge:forge:1.16.5-36.2.2'
     if (System.getProperty("idea.sync.active") != "true") {
-        annotationProcessor 'org.spongepowered:mixin:0.8.2:processor'
+        annotationProcessor 'org.spongepowered:mixin:0.8.3:processor'
     }
 
     runtimeOnly fg.deobf("curse.maven:useless_sword-348157:3483402")
