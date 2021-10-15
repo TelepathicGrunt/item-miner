@@ -15,6 +15,7 @@ public class ItemMinerConfigs {
         public ConfigHelper.ConfigValueListener<List<String>> itemsAllowedPerList;
         public ConfigHelper.ConfigValueListener<List<String>> itemsDisllowedPerList;
         public ConfigHelper.ConfigValueListener<List<Integer>> itemsPerLevelUp;
+        public ConfigHelper.ConfigValueListener<List<Float>> moddedItemRates;
         public ConfigHelper.ConfigValueListener<Boolean> dropOnlyOnBlockBreak;
         public ConfigHelper.ConfigValueListener<Integer> itemSpawnRate;
         public ConfigHelper.ConfigValueListener<Integer> miningSpeed;
@@ -63,6 +64,17 @@ public class ItemMinerConfigs {
                             " you can just remove \"modded*\" or modded entries from the itemsAllowedPerList instead lmao.")
                     .translation("item_miner.config.itemsdisllowedperlist")
                     .define("itemsDisllowedPerList", Arrays.asList("", "", "")));
+
+            moddedItemRates = subscriber.subscribe(builder
+                    .comment("\n-----------------------------------------------------",
+                            " A list of how common modded are per level.",
+                            " First entry is for level 1. Second for level 2. Etc",
+                            " If a level does not have modded items, the entry here for that level is ignored.",
+                            " If this list is shorter than number of levels, levels not listed here will spawn items as if they all have an equal chance.",
+                            " Range is 0 to 1 with 1 being 100% chance.",
+                            " Pick a negative number to make the vanilla and modded items spawn as if they are all equal chance.")
+                    .translation("item_miner.config.moddeditemrates")
+                    .define("moddedItemRates", Arrays.asList(-1.0f, 0.1f, 0.5f)));
 
             dropOnlyOnBlockBreak = subscriber.subscribe(builder
                     .comment("\n-----------------------------------------------------",

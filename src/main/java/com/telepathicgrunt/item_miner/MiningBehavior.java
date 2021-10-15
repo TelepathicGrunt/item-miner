@@ -25,6 +25,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -122,7 +123,7 @@ public class MiningBehavior {
             }
 
             // grabs the collection of items and picks a random one
-            List<Item> collection = ItemCollections.LEVEL_TO_ITEMS.get(level);
+            List<Item> collection = getItemCollectionToUse(level, world.random);
             if(!collection.isEmpty()) {
                 ItemStack newItemStack = collection.get(world.random.nextInt(collection.size())).getDefaultInstance();
 
@@ -165,6 +166,33 @@ public class MiningBehavior {
             // Send the new level and progress to client to display visually is it is the hunted that is mining.
             if(isCurrentlyHuntedPlayer) {
                 PacketChannel.sendToAllPlayers(new LevelProgressPacketHandler(cap.getLevel(), cap.getProgress(), getItemsForMaxProgress(cap.getLevel())));
+            }
+        }
+    }
+
+    private static List<Item> getItemCollectionToUse(int level, Random random) {
+        List<Item> vanillaList = ItemCollections.LEVEL_TO_ITEMS.get(level).getFirst();
+        List<Item> moddedList = ItemCollections.LEVEL_TO_ITEMS.get(level).getSecond();
+        List<Float> moddedItemRates = ItemMiner.ITEM_MINER_CONFIGS.moddedItemRates.get();
+
+        // picks vanilla or modded based on the rate specified in config
+        if(level <= moddedItemRates.size() && moddedItemRates.get(level - 1) >= 0) {
+            if(random.nextFloat() < moddedItemRates.get(level - 1)) {
+                return moddedList;
+            }
+            else {
+                return vanillaList;
+            }
+        }
+        // spawn either vanilla or modded at equal chance in proportion to their list size
+        else {
+            int vanillaListSize = vanillaList.size();
+            int moddedListSize = moddedList.size();
+            if(random.nextInt(vanillaListSize + moddedListSize) < vanillaListSize) {
+                return vanillaList;
+            }
+            else {
+                return moddedList;
             }
         }
     }
