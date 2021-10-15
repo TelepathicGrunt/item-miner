@@ -1,6 +1,5 @@
 package com.telepathicgrunt.item_miner.packets;
 
-import com.telepathicgrunt.item_miner.ItemMiner;
 import com.telepathicgrunt.item_miner.client.ItemMinerClient;
 import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.fml.network.NetworkEvent;

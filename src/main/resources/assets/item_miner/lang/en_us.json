@@ -1,3 +1,4 @@
 {
-  "item_miner.progress": "Level: %s - Progress: %s/%s"
+  "item_miner.progress": "Level: %s - Progress: %s/%s",
+  "item_miner.max_progress": "Max level: %s"
 }

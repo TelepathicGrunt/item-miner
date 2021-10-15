@@ -150,13 +150,10 @@ public class MiningBehavior {
             int progress = cap.getProgress();
             int itemsForMaxProgress = getItemsForMaxProgress(level);
             if(progress + 1 >= itemsForMaxProgress) {
-                // Maxes out progress and makes it never go above the final level from itemsPerList config.
+                // Makes it never go above the final level from itemsPerList config.
                 if(level < ItemCollections.MAX_LEVEL) {
                     cap.setProgress(0);
                     cap.setLevel(level + 1);
-                }
-                else if(progress < itemsForMaxProgress) {
-                    cap.setProgress(progress + 1);
                 }
             }
             else {
@@ -198,6 +195,8 @@ public class MiningBehavior {
     }
 
     private static int getItemsForMaxProgress(int level) {
+        if(level == ItemCollections.MAX_LEVEL) return -1;
+
         List<Integer> itemsForLevelingUp = ItemMiner.ITEM_MINER_CONFIGS.itemsPerLevelUp.get();
         int maxProgressAmount;
 

@@ -24,7 +24,13 @@ public class ProgressGUI {
             int progress = ItemMinerClient.currentProgressToDisplay;
             int maxProgress = ItemMinerClient.currentMaxProgressToDisplay;
 
-            ITextComponent textToRender = new TranslationTextComponent("item_miner.progress", level, progress, maxProgress);
+            ITextComponent textToRender;
+            if(maxProgress == -1) {
+                textToRender = new TranslationTextComponent("item_miner.max_progress", level);
+            }
+            else {
+                textToRender = new TranslationTextComponent("item_miner.progress", level, progress, maxProgress);
+            }
             int fontWidth = Minecraft.getInstance().font.width(textToRender);
             int guiScaledWidth = Minecraft.getInstance().getWindow().getGuiScaledWidth();
             int barStartX = guiScaledWidth / 2 - 91;

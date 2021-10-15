@@ -31,7 +31,7 @@ public class ItemMinerConfigs {
 
             itemMinerBlocks = subscriber.subscribe(builder
                     .comment("\n-----------------------------------------------------",
-                            " A list of items that should become unbreakable and spawns items when mined.")
+                            " A list of items that should become unable to be permanently destroyed and will spawns random items when mined.")
                     .translation("item_miner.config.itemminerblocks")
                     .define("itemMinerBlocks", Arrays.asList("minecraft:gold_block", "minecraft:diamond_block")));
 
@@ -40,10 +40,9 @@ public class ItemMinerConfigs {
                             " How many items to mine to level up. This is an array per level.",
                             " Example: if there are 3 levels, the first number of this config is number of items for first level.",
                             " Second number for second number. Etc. If this list is shorter than number of levels,",
-                            " the last number will be used for all excess levels. If this list is empty, all levels defaults to 100 items.",
-                            " If max progress is obtained on the last level, the hunted will not level up any further and remain at max progress for that level.")
+                            " the last number will be used for all excess levels. If this list is empty, all levels defaults to 100 items.")
                     .translation("item_miner.config.itemsperlevelup")
-                    .define("itemsPerLevelUp", Arrays.asList(100, 300, 500)));
+                    .define("itemsPerLevelUp", Arrays.asList(100, 300)));
 
             itemsAllowedPerList = subscriber.subscribe(builder
                     .comment("\n-----------------------------------------------------",
