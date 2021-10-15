@@ -47,7 +47,7 @@ public class MiningBehavior {
             ServerPlayerEntity serverPlayerEntity = event.getPlayer().level.getServer().getPlayerList().getPlayerByName(ItemMiner.ITEM_MINER_CONFIGS.huntedName.get());
             if(serverPlayerEntity != null) {
                 PlayerLevelAndProgress cap = (PlayerLevelAndProgress) serverPlayerEntity.getCapability(PLAYER_LEVEL_AND_PROGRESS).orElseThrow(RuntimeException::new);
-                PacketChannel.sendToOnePlayer(new LevelProgressPacketHandler(cap.getLevel(), cap.getProgress(), ItemMiner.ITEM_MINER_CONFIGS.itemsToLevelUp.get()), (ServerPlayerEntity) event.getPlayer());
+                PacketChannel.sendToOnePlayer(new LevelProgressPacketHandler(cap.getLevel(), cap.getProgress(), getItemsForMaxProgress(cap.getLevel())), (ServerPlayerEntity) event.getPlayer());
             }
         }
     }
@@ -86,10 +86,13 @@ public class MiningBehavior {
             !event.getPlayer().isCreative() &&
             ITEM_MINERS_BLOCKS.contains(event.getState().getBlock()))
         {
-            event.setNewSpeed(ItemMiner.ITEM_MINER_CONFIGS.miningSpeed.get());
+            if(ItemMiner.ITEM_MINER_CONFIGS.miningSpeed.get() < 0) {
+                event.setNewSpeed(ItemMiner.ITEM_MINER_CONFIGS.miningSpeed.get());
+            }
 
-            if(!ItemMiner.ITEM_MINER_CONFIGS.dropOnlyOnBlockBreak.get())
+            if(!ItemMiner.ITEM_MINER_CONFIGS.dropOnlyOnBlockBreak.get()) {
                 attemptItemSpawning(event.getPlayer().level, event.getPlayer(), event.getPos());
+            }
         }
     }
 
@@ -138,13 +141,14 @@ public class MiningBehavior {
 
             // Update progress on entity (applies to all players in case we want to switch to per-player progress)
             int progress = cap.getProgress();
-            if(progress + 1 >= ItemMiner.ITEM_MINER_CONFIGS.itemsToLevelUp.get()) {
+            int itemsForMaxProgress = getItemsForMaxProgress(level);
+            if(progress + 1 >= itemsForMaxProgress) {
                 // Maxes out progress and makes it never go above the final level from itemsPerList config.
                 if(level < ItemCollections.MAX_LEVEL) {
                     cap.setProgress(0);
                     cap.setLevel(level + 1);
                 }
-                else if(progress < ItemMiner.ITEM_MINER_CONFIGS.itemsToLevelUp.get()) {
+                else if(progress < itemsForMaxProgress) {
                     cap.setProgress(progress + 1);
                 }
             }
@@ -154,8 +158,22 @@ public class MiningBehavior {
 
             // Send the new level and progress to client to display visually is it is the hunted that is mining.
             if(isCurrentlyHuntedPlayer) {
-                PacketChannel.sendToAllPlayers(new LevelProgressPacketHandler(cap.getLevel(), cap.getProgress(), ItemMiner.ITEM_MINER_CONFIGS.itemsToLevelUp.get()));
+                PacketChannel.sendToAllPlayers(new LevelProgressPacketHandler(cap.getLevel(), cap.getProgress(), getItemsForMaxProgress(cap.getLevel())));
             }
         }
+    }
+
+    private static int getItemsForMaxProgress(int level) {
+        List<Integer> itemsForLevelingUp = ItemMiner.ITEM_MINER_CONFIGS.itemsPerLevelUp.get();
+        int maxProgressAmount;
+
+        if(level <= itemsForLevelingUp.size()) {
+            maxProgressAmount = itemsForLevelingUp.get(level - 1);
+        }
+        else {
+            if(itemsForLevelingUp.isEmpty()) maxProgressAmount = 100;
+            else maxProgressAmount = itemsForLevelingUp.get(itemsForLevelingUp.size() - 1);
+        }
+        return maxProgressAmount;
     }
 }

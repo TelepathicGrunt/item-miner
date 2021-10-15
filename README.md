@@ -30,3 +30,11 @@ Test and see if it all works. (Finished)
 ### Extra checklist:
 
 improve config to specify any level and any items. (Finished)
+
+### Version 2 checklist:
+
+config to specify how many blocks needed to level up for each level.
+
+config to do modded % rates and import all modded items
+
+config to allow spawning mobs from spawn eggs right away.

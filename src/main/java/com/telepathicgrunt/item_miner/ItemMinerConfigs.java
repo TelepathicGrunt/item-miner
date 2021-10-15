@@ -15,7 +15,7 @@ public class ItemMinerConfigs {
         public ConfigHelper.ConfigValueListener<Integer> itemSpawnRate;
         public ConfigHelper.ConfigValueListener<Boolean> dropOnlyOnBlockBreak;
         public ConfigHelper.ConfigValueListener<Integer> miningSpeed;
-        public ConfigHelper.ConfigValueListener<Integer> itemsToLevelUp;
+        public ConfigHelper.ConfigValueListener<List<Integer>> itemsPerLevelUp;
         public ConfigHelper.ConfigValueListener<List<String>> itemsPerList;
 
         public ItemMinerConfigValues(ForgeConfigSpec.Builder builder, ConfigHelper.Subscriber subscriber) {
@@ -47,16 +47,21 @@ public class ItemMinerConfigs {
 
             miningSpeed = subscriber.subscribe(builder
                     .comment("\n-----------------------------------------------------",
-                            " How much faster or slower mining the block is.",
-                            " If dropOnlyOnBlockBreak is true, this affects the mining overlay on the block.")
+                            " Overrides how fast or slow mining the block is.",
+                            " If dropOnlyOnBlockBreak is true, this affects the mining overlay on the block.",
+                            " If set to any negative number, the block's break speed will remain unchanged from vanilla.")
                     .translation("item_miner.config.miningSpeed")
-                    .define("miningspeed", 9));
+                    .define("miningspeed", -1));
 
-            itemsToLevelUp = subscriber.subscribe(builder
+            itemsPerLevelUp = subscriber.subscribe(builder
                     .comment("\n-----------------------------------------------------",
-                            " How many items to mine to level up once.")
-                    .translation("item_miner.config.itemstolevelup")
-                    .define("itemsToLevelUp", 100));
+                            " How many items to mine to level up. This is an array per level.",
+                            " Example: if there are 3 levels, the first number of this config is number of items for first level.",
+                            " Second number for second number. Etc. If this list is shorter than number of levels,",
+                            " the last number will be used for all excess levels. If this list is empty, all levels defaults to 100 items.",
+                            " If max progress is obtained on the last level, the hunted will not level up any further and remain at max progress for that level.")
+                    .translation("item_miner.config.itemsperlevelup")
+                    .define("itemsPerLevelUp", Arrays.asList(100, 300, 500)));
 
             itemsPerList = subscriber.subscribe(builder
                     .comment("\n-----------------------------------------------------",
