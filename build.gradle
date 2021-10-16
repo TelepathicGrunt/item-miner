@@ -55,6 +55,18 @@ dependencies {
     }
 
     runtimeOnly fg.deobf("curse.maven:useless_sword-348157:3483402")
+    runtimeOnly fg.deobf("curse.maven:silent_gear-297039:3386805")
+    runtimeOnly fg.deobf("curse.maven:silent_lib-242998:3235738")
+    runtimeOnly fg.deobf("curse.maven:random_loot-301631:3289305")
+    runtimeOnly fg.deobf("curse.maven:better_animals_plus-303557:3286395")
+    runtimeOnly fg.deobf("curse.maven:cyclic-239286:3491138")
+    runtimeOnly fg.deobf("curse.maven:potion_of_bees-355348:3121058")
+    runtimeOnly fg.deobf("curse.maven:inventory_pets-229380:3341486")
+    runtimeOnly fg.deobf("curse.maven:gun_without_roses-405077:3323323")
+}
+
+mixin {
+    add sourceSets.main, "${modid}.refmap.json"
 }
 
 jar {
