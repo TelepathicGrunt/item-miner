@@ -11,11 +11,12 @@ public class ItemMinerConfigs {
     public static class ItemMinerConfigValues {
 
         public ConfigHelper.ConfigValueListener<String> huntedName;
-        public ConfigHelper.ConfigValueListener<List<String>> itemMinerBlocks;
+        public ConfigHelper.ConfigValueListener<List<String>> itemMinerBlocksHunter;
+        public ConfigHelper.ConfigValueListener<List<String>> itemMinerBlocksHunted;
         public ConfigHelper.ConfigValueListener<List<String>> itemsAllowedPerList;
         public ConfigHelper.ConfigValueListener<List<String>> itemsDisllowedPerList;
         public ConfigHelper.ConfigValueListener<List<Integer>> itemsPerLevelUp;
-        public ConfigHelper.ConfigValueListener<List<Float>> moddedItemRates;
+        public ConfigHelper.ConfigValueListener<List<Integer>> moddedItemRates;
         public ConfigHelper.ConfigValueListener<Boolean> dropOnlyOnBlockBreak;
         public ConfigHelper.ConfigValueListener<Integer> itemSpawnRate;
         public ConfigHelper.ConfigValueListener<Integer> miningSpeed;
@@ -29,11 +30,19 @@ public class ItemMinerConfigs {
                     .translation("item_miner.config.huntedname")
                     .define("huntedName", "Dev"));
 
-            itemMinerBlocks = subscriber.subscribe(builder
+            itemMinerBlocksHunted = subscriber.subscribe(builder
                     .comment("\n-----------------------------------------------------",
-                            " A list of items that should become unable to be permanently destroyed and will spawns random items when mined.")
-                    .translation("item_miner.config.itemminerblocks")
-                    .define("itemMinerBlocks", Arrays.asList("minecraft:gold_block", "minecraft:diamond_block")));
+                            " A list of items that should become unable to be permanently destroyed and will spawns random items when mined.",
+                            " Only drops random items for hunteds.")
+                    .translation("item_miner.config.itemminerblockshunted")
+                    .define("itemMinerBlocksHunted", Arrays.asList("minecraft:redstone_block", "minecraft:emerald_block")));
+
+            itemMinerBlocksHunter = subscriber.subscribe(builder
+                    .comment("\n-----------------------------------------------------",
+                            " A list of items that should become unable to be permanently destroyed and will spawns random items when mined.",
+                            " Only drops random items for hunters.")
+                    .translation("item_miner.config.itemminerblockshunter")
+                    .define("itemMinerBlocksHunter", Arrays.asList("minecraft:gold_block", "minecraft:diamond_block")));
 
             itemsPerLevelUp = subscriber.subscribe(builder
                     .comment("\n-----------------------------------------------------",
@@ -66,14 +75,12 @@ public class ItemMinerConfigs {
 
             moddedItemRates = subscriber.subscribe(builder
                     .comment("\n-----------------------------------------------------",
-                            " A list of how common modded items are per level.",
+                            " A list of how many vanilla items need to spawn before a modded items spawns per level.",
                             " First entry is for level 1. Second for level 2. Etc",
                             " If a level does not have modded items, the entry here for that level is ignored.",
-                            " If this list is shorter than number of levels, levels not listed here will spawn items as if they all have an equal chance.",
-                            " Range is 0 to 1 with 1 being 100% chance.",
-                            " Pick a negative number to make the vanilla and modded items spawn as if they are all equal chance.")
+                            " If this list is shorter than number of levels, levels not listed here will alternate between modded and vanilla items.")
                     .translation("item_miner.config.moddeditemrates")
-                    .define("moddedItemRates", Arrays.asList(-1.0f, 0.1f, 0.5f)));
+                    .define("moddedItemRates", Arrays.asList(0, 9, 1)));
 
             dropOnlyOnBlockBreak = subscriber.subscribe(builder
                     .comment("\n-----------------------------------------------------",

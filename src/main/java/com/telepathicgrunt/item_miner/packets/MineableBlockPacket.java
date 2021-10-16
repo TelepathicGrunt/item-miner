@@ -17,37 +17,55 @@ public class MineableBlockPacket implements ItemMinerPacket {
      *
      * Packet to send to client and how the client will respond
      */
-    private final Set<Block> itemMinables;
+    private final Set<Block> itemMinablesHunter;
+    private final Set<Block> itemMinablesHunted;
+    private final boolean isHunted;
 
     /*
      * Sets the mineables for packet
      */
-    public MineableBlockPacket(Set<Block> itemMinables) {
-        this.itemMinables = itemMinables;
+    public MineableBlockPacket(Set<Block> itemMinablesHunter, Set<Block> itemMinablesHunted, boolean isHunted) {
+        this.itemMinablesHunter = itemMinablesHunter;
+        this.itemMinablesHunted = itemMinablesHunted;
+        this.isHunted = isHunted;
     }
 
     /*
      * How the client will read the packet.
      */
     public static MineableBlockPacket decode(final PacketBuffer buf) {
-        int size = buf.readVarInt();
-        Set<Block> mineableBlocks = new HashSet<>();
-
-        for (int i = 0; i < size; i++) {
-            mineableBlocks.add(ForgeRegistries.BLOCKS.getValue(buf.readResourceLocation()));
+        int size1 = buf.readVarInt();
+        Set<Block> mineableBlocks1 = new HashSet<>();
+        for (int i = 0; i < size1; i++) {
+            mineableBlocks1.add(ForgeRegistries.BLOCKS.getValue(buf.readResourceLocation()));
         }
 
-        return new MineableBlockPacket(mineableBlocks);
+        int size2 = buf.readVarInt();
+        Set<Block> mineableBlocks2 = new HashSet<>();
+        for (int i = 0; i < size2; i++) {
+            mineableBlocks2.add(ForgeRegistries.BLOCKS.getValue(buf.readResourceLocation()));
+        }
+
+        boolean isHunted = buf.readBoolean();
+
+        return new MineableBlockPacket(mineableBlocks1, mineableBlocks2, isHunted);
     }
 
     /*
      * creates the packet buffer and sets its values
      */
     public void encode(final PacketBuffer buf) {
-        buf.writeVarInt(this.itemMinables.size());
-        for (Block block : this.itemMinables) {
+        buf.writeVarInt(this.itemMinablesHunter.size());
+        for (Block block : this.itemMinablesHunter) {
             buf.writeResourceLocation(block.getRegistryName());
         }
+
+        buf.writeVarInt(this.itemMinablesHunted.size());
+        for (Block block : this.itemMinablesHunted) {
+            buf.writeResourceLocation(block.getRegistryName());
+        }
+
+        buf.writeBoolean(this.isHunted);
     }
 
 
@@ -55,7 +73,9 @@ public class MineableBlockPacket implements ItemMinerPacket {
      * What the client will do with the packet
      */
     public void handle(final Supplier<NetworkEvent.Context> ctx) {
-        MiningBehavior.ITEM_MINERS_BLOCKS = itemMinables;
+        MiningBehavior.ITEM_MINERS_BLOCKS_HUNTER = itemMinablesHunter;
+        MiningBehavior.ITEM_MINERS_BLOCKS_HUNTED = itemMinablesHunted;
+        MiningBehavior.IS_HUNTED = isHunted;
         ctx.get().setPacketHandled(true);
     }
 }

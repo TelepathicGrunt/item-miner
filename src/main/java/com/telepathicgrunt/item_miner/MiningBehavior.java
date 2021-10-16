@@ -7,6 +7,7 @@ import com.telepathicgrunt.item_miner.packets.LevelProgressPacketHandler;
 import com.telepathicgrunt.item_miner.packets.MineableBlockPacket;
 import com.telepathicgrunt.item_miner.packets.PacketChannel;
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.item.ItemEntity;
@@ -37,10 +38,16 @@ public class MiningBehavior {
 
     @CapabilityInject(IPlayerLevelAndProgress.class)
     public static Capability<IPlayerLevelAndProgress> PLAYER_LEVEL_AND_PROGRESS = null;
-    public static Set<Block> ITEM_MINERS_BLOCKS = new HashSet<>();
+    public static Set<Block> ITEM_MINERS_BLOCKS_HUNTED = new HashSet<>();
+    public static Set<Block> ITEM_MINERS_BLOCKS_HUNTER = new HashSet<>();
+    public static Boolean IS_HUNTED = false; // Client side use in case it is needed. Unused right now
 
     public static void setupItemMinerSet() {
-        ITEM_MINERS_BLOCKS = ItemMiner.ITEM_MINER_CONFIGS.itemMinerBlocks.get().stream()
+        ITEM_MINERS_BLOCKS_HUNTED = ItemMiner.ITEM_MINER_CONFIGS.itemMinerBlocksHunted.get().stream()
+                .map(stringRl -> ForgeRegistries.BLOCKS.getValue(new ResourceLocation(stringRl)))
+                .collect(Collectors.toSet());
+
+        ITEM_MINERS_BLOCKS_HUNTER = ItemMiner.ITEM_MINER_CONFIGS.itemMinerBlocksHunter.get().stream()
                 .map(stringRl -> ForgeRegistries.BLOCKS.getValue(new ResourceLocation(stringRl)))
                 .collect(Collectors.toSet());
     }
@@ -49,7 +56,8 @@ public class MiningBehavior {
     // Also updates client to know what the current hunted's level and progress is
     public static void PlayerJoinEvent(PlayerEvent.PlayerLoggedInEvent event) {
         if(!event.getPlayer().level.isClientSide()) {
-            PacketChannel.sendToOnePlayer(new MineableBlockPacket(ITEM_MINERS_BLOCKS), (ServerPlayerEntity) event.getPlayer());
+            boolean isHunted = event.getPlayer().getName().getString().equals(ItemMiner.ITEM_MINER_CONFIGS.huntedName.get());
+            PacketChannel.sendToOnePlayer(new MineableBlockPacket(ITEM_MINERS_BLOCKS_HUNTER, ITEM_MINERS_BLOCKS_HUNTED, isHunted), (ServerPlayerEntity) event.getPlayer());
             ServerPlayerEntity serverPlayerEntity = event.getPlayer().level.getServer().getPlayerList().getPlayerByName(ItemMiner.ITEM_MINER_CONFIGS.huntedName.get());
             if(serverPlayerEntity != null) {
                 PlayerLevelAndProgress cap = (PlayerLevelAndProgress) serverPlayerEntity.getCapability(PLAYER_LEVEL_AND_PROGRESS).orElseThrow(RuntimeException::new);
@@ -63,46 +71,49 @@ public class MiningBehavior {
     public static void BlockDestroyEvent(BlockEvent.BreakEvent event) {
         if(event.getPlayer() != null &&
             !event.getPlayer().isCreative() &&
-            ITEM_MINERS_BLOCKS.contains(event.getState().getBlock()))
+            (ITEM_MINERS_BLOCKS_HUNTER.contains(event.getState().getBlock()) || ITEM_MINERS_BLOCKS_HUNTED.contains(event.getState().getBlock())))
         {
             event.setCanceled(true);
 
             if(ItemMiner.ITEM_MINER_CONFIGS.dropOnlyOnBlockBreak.get()) {
-                attemptItemSpawning(event.getPlayer().level, event.getPlayer(), event.getPos());
+                attemptItemSpawning(event.getPlayer().level, event.getPlayer(), event.getPos(), event.getState().getBlock());
             }
         }
     }
 
     // Prevents wither, enderdragon, zombies, and other mobs from breaking block
     public static void BlockDestroyByMobEvent(LivingDestroyBlockEvent event) {
-        if(ITEM_MINERS_BLOCKS.contains(event.getState().getBlock())) {
+        if((ITEM_MINERS_BLOCKS_HUNTER.contains(event.getState().getBlock()) || ITEM_MINERS_BLOCKS_HUNTED.contains(event.getState().getBlock()))) {
             event.setCanceled(true);
         }
     }
 
     // Prevents explosions from destroying the block
     public static void BlockDestroyByExplosionEvent(ExplosionEvent.Detonate event) {
-        event.getAffectedBlocks().removeIf((blockPos) ->
-                ITEM_MINERS_BLOCKS.contains(event.getWorld().getBlockState(blockPos).getBlock()));
+        event.getAffectedBlocks().removeIf((blockPos) -> {
+            Block block = event.getWorld().getBlockState(blockPos).getBlock();
+            return ITEM_MINERS_BLOCKS_HUNTER.contains(block) || ITEM_MINERS_BLOCKS_HUNTED.contains(block);
+        });
     }
 
     // handles preventing the block from having a mining overlay and spawns item instead.
     public static void BlockBreakingEvent(PlayerEvent.BreakSpeed event) {
         if(event.getPlayer() != null &&
             !event.getPlayer().isCreative() &&
-            ITEM_MINERS_BLOCKS.contains(event.getState().getBlock()))
+            (ITEM_MINERS_BLOCKS_HUNTER.contains(event.getState().getBlock()) || ITEM_MINERS_BLOCKS_HUNTED.contains(event.getState().getBlock())))
         {
+            event.setNewSpeed(100);
             if(ItemMiner.ITEM_MINER_CONFIGS.miningSpeed.get() >= 0) {
                 event.setNewSpeed(ItemMiner.ITEM_MINER_CONFIGS.miningSpeed.get());
             }
 
             if(!ItemMiner.ITEM_MINER_CONFIGS.dropOnlyOnBlockBreak.get()) {
-                attemptItemSpawning(event.getPlayer().level, event.getPlayer(), event.getPos());
+                attemptItemSpawning(event.getPlayer().level, event.getPlayer(), event.getPos(), event.getState().getBlock());
             }
         }
     }
 
-    private static void attemptItemSpawning(World world, PlayerEntity player, BlockPos pos) {
+    private static void attemptItemSpawning(World world, PlayerEntity player, BlockPos pos, Block blockBeingMined) {
         if (!world.isClientSide) {
             PlayerLevelAndProgress cap = (PlayerLevelAndProgress) player.getCapability(PLAYER_LEVEL_AND_PROGRESS).orElseThrow(RuntimeException::new);
 
@@ -122,81 +133,79 @@ public class MiningBehavior {
             // Otherwise, using level 1 items for everyone else.
             int level = 1;
             boolean isCurrentlyHuntedPlayer = player.getName().getContents().equals(ItemMiner.ITEM_MINER_CONFIGS.huntedName.get());
-            if (isCurrentlyHuntedPlayer) {
-                level = Math.min(cap.getLevel(), ItemCollections.MAX_LEVEL);
-            }
+            if((ITEM_MINERS_BLOCKS_HUNTED.contains(blockBeingMined) && isCurrentlyHuntedPlayer) ||
+                (ITEM_MINERS_BLOCKS_HUNTER.contains(blockBeingMined) && !isCurrentlyHuntedPlayer))
+            {
+                if (isCurrentlyHuntedPlayer) {
+                    level = Math.min(cap.getLevel(), ItemCollections.MAX_LEVEL);
+                }
 
-            // grabs the collection of items and picks a random one
-            List<Item> collection = getItemCollectionToUse(level, world.random);
-            if(!collection.isEmpty()) {
-                ItemStack newItemStack = collection.get(world.random.nextInt(collection.size())).getDefaultInstance();
+                // grabs the collection of items and picks a random one
+                int progress = cap.getProgress();
+                List<Item> collection = getItemCollectionToUse(level, progress, world.random);
+                if(!collection.isEmpty()) {
+                    ItemStack newItemStack = collection.get(world.random.nextInt(collection.size())).getDefaultInstance();
 
-                if(ItemMiner.ITEM_MINER_CONFIGS.spawnMobsFromSpawnEggs.get() && newItemStack.getItem() instanceof SpawnEggItem) {
-                    SpawnEggItem spawnEgg = (SpawnEggItem) newItemStack.getItem();
-                    EntityType<?> entityType = ((SpawnEggItemAccessor)spawnEgg).getDefaultType();
-                    entityType.spawn((ServerWorld)world, newItemStack, player, pos.above(), SpawnReason.SPAWN_EGG, false, false);
+                    if(ItemMiner.ITEM_MINER_CONFIGS.spawnMobsFromSpawnEggs.get() && newItemStack.getItem() instanceof SpawnEggItem) {
+                        SpawnEggItem spawnEgg = (SpawnEggItem) newItemStack.getItem();
+                        EntityType<?> entityType = ((SpawnEggItemAccessor)spawnEgg).getDefaultType();
+                        entityType.spawn((ServerWorld)world, newItemStack, player, pos.above(), SpawnReason.SPAWN_EGG, false, false);
+                    }
+                    else {
+                        // spawns the new item in world above block
+                        double xOffset = (double)(world.random.nextFloat() * 0.5F) + 0.25D;
+                        double yOffset = (double)(world.random.nextFloat() * 0.5F) + 0.75D;
+                        double zOffset = (double)(world.random.nextFloat() * 0.5F) + 0.25D;
+                        ItemEntity itementity = new ItemEntity(
+                                world,
+                                (double)pos.getX() + xOffset,
+                                (double)pos.getY() + yOffset,
+                                (double)pos.getZ() + zOffset,
+                                newItemStack);
+                        itementity.setDefaultPickUpDelay();
+                        world.addFreshEntity(itementity);
+                    }
+                }
+
+                // Update progress on entity (applies to all players in case we want to switch to per-player progress)
+                int itemsForMaxProgress = getItemsForMaxProgress(level);
+                if(progress + 1 >= itemsForMaxProgress) {
+                    // Makes it never go above the final level from itemsPerList config.
+                    if(level < ItemCollections.MAX_LEVEL) {
+                        cap.setProgress(0);
+                        cap.setLevel(level + 1);
+                    }
+                    else {
+                        cap.setProgress(progress + 1);
+                    }
                 }
                 else {
-                    // spawns the new item in world above block
-                    double xOffset = (double)(world.random.nextFloat() * 0.5F) + 0.25D;
-                    double yOffset = (double)(world.random.nextFloat() * 0.5F) + 0.75D;
-                    double zOffset = (double)(world.random.nextFloat() * 0.5F) + 0.25D;
-                    ItemEntity itementity = new ItemEntity(
-                            world,
-                            (double)pos.getX() + xOffset,
-                            (double)pos.getY() + yOffset,
-                            (double)pos.getZ() + zOffset,
-                            newItemStack);
-                    itementity.setDefaultPickUpDelay();
-                    world.addFreshEntity(itementity);
+                    cap.setProgress(progress + 1);
                 }
-            }
 
-            // Update progress on entity (applies to all players in case we want to switch to per-player progress)
-            int progress = cap.getProgress();
-            int itemsForMaxProgress = getItemsForMaxProgress(level);
-            if(progress + 1 >= itemsForMaxProgress) {
-                // Makes it never go above the final level from itemsPerList config.
-                if(level < ItemCollections.MAX_LEVEL) {
-                    cap.setProgress(0);
-                    cap.setLevel(level + 1);
+                // Send the new level and progress to client to display visually is it is the hunted that is mining.
+                if(isCurrentlyHuntedPlayer) {
+                    PacketChannel.sendToAllPlayers(new LevelProgressPacketHandler(cap.getLevel(), cap.getProgress(), getItemsForMaxProgress(cap.getLevel())));
                 }
-            }
-            else {
-                cap.setProgress(progress + 1);
-            }
-
-            // Send the new level and progress to client to display visually is it is the hunted that is mining.
-            if(isCurrentlyHuntedPlayer) {
-                PacketChannel.sendToAllPlayers(new LevelProgressPacketHandler(cap.getLevel(), cap.getProgress(), getItemsForMaxProgress(cap.getLevel())));
             }
         }
     }
 
-    private static List<Item> getItemCollectionToUse(int level, Random random) {
+    private static List<Item> getItemCollectionToUse(int level, int currentProgress, Random random) {
         List<Item> vanillaList = ItemCollections.LEVEL_TO_ITEMS.get(level).getFirst();
         List<Item> moddedList = ItemCollections.LEVEL_TO_ITEMS.get(level).getSecond();
-        List<Float> moddedItemRates = ItemMiner.ITEM_MINER_CONFIGS.moddedItemRates.get();
+        List<Integer> moddedItemRates = ItemMiner.ITEM_MINER_CONFIGS.moddedItemRates.get();
+        int modulo = 2;
 
-        // picks vanilla or modded based on the rate specified in config
         if(level <= moddedItemRates.size() && moddedItemRates.get(level - 1) >= 0) {
-            if(random.nextFloat() < moddedItemRates.get(level - 1)) {
-                return moddedList;
-            }
-            else {
-                return vanillaList;
-            }
+            modulo = moddedItemRates.get(level - 1) + 1;
         }
         // spawn either vanilla or modded at equal chance in proportion to their list size
+        if(!moddedList.isEmpty() && currentProgress % modulo == 0) {
+            return moddedList;
+        }
         else {
-            int vanillaListSize = vanillaList.size();
-            int moddedListSize = moddedList.size();
-            if(random.nextInt(vanillaListSize + moddedListSize) < vanillaListSize) {
-                return vanillaList;
-            }
-            else {
-                return moddedList;
-            }
+            return vanillaList;
         }
     }
 
