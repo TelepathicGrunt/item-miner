@@ -5,7 +5,7 @@ license="see license file"
 
 [[mods]] #mandatory
 modId="item_miner" #mandatory
-logoFile="tg_icon.png"
+logoFile="item_miner.png"
 logoBlur=false
 version="${file.jarVersion}" #mandatory
 displayName="Item Miner" #mandatory
