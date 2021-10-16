@@ -102,7 +102,6 @@ public class MiningBehavior {
             !event.getPlayer().isCreative() &&
             (ITEM_MINERS_BLOCKS_HUNTER.contains(event.getState().getBlock()) || ITEM_MINERS_BLOCKS_HUNTED.contains(event.getState().getBlock())))
         {
-            event.setNewSpeed(100);
             if(ItemMiner.ITEM_MINER_CONFIGS.miningSpeed.get() >= 0) {
                 event.setNewSpeed(ItemMiner.ITEM_MINER_CONFIGS.miningSpeed.get());
             }
@@ -194,7 +193,7 @@ public class MiningBehavior {
     private static List<Item> getItemCollectionToUse(int level, int currentProgress, Random random) {
         List<Item> vanillaList = ItemCollections.LEVEL_TO_ITEMS.get(level).getFirst();
         List<Item> moddedList = ItemCollections.LEVEL_TO_ITEMS.get(level).getSecond();
-        List<Integer> moddedItemRates = ItemMiner.ITEM_MINER_CONFIGS.moddedItemRates.get();
+        List<? extends Integer> moddedItemRates = ItemMiner.ITEM_MINER_CONFIGS.moddedItemRates.get();
         int modulo = 2;
 
         if(level <= moddedItemRates.size() && moddedItemRates.get(level - 1) >= 0) {
@@ -212,7 +211,7 @@ public class MiningBehavior {
     private static int getItemsForMaxProgress(int level) {
         if(level == ItemCollections.MAX_LEVEL) return -1;
 
-        List<Integer> itemsForLevelingUp = ItemMiner.ITEM_MINER_CONFIGS.itemsPerLevelUp.get();
+        List<? extends Integer> itemsForLevelingUp = ItemMiner.ITEM_MINER_CONFIGS.itemsPerLevelUp.get();
         int maxProgressAmount;
 
         if(level <= itemsForLevelingUp.size()) {
